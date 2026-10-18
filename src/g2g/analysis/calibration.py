@@ -1,0 +1,82 @@
+from __future__ import annotations
+
+from collections import Counter
+from math import ceil, sqrt
+
+import numpy as np
+
+from g2g.util import digest
+
+
+def fit_threshold(
+    rows: list[dict], weights: dict[str, float] | None = None, expected_counts: dict[str, int] | None = None
+) -> dict:
+    weights = weights or {"adapted": 0.5, "synthetic": 0.5}
+    if abs(sum(weights.values()) - 1) > 1e-12 or any(w <= 0 for w in weights.values()):
+        raise ValueError("Positive source weights must sum to one")
+    if len({r["case_id"] for r in rows}) != len(rows):
+        raise ValueError("Duplicate calibration case")
+    if any(
+        r.get("split") != "calibration"
+        or r.get("arm") != 0
+        or r.get("label") != "benign"
+        or r.get("status") != "valid"
+        or type(r.get("score")) is not int
+        or not 0 <= r["score"] <= 100
+        for r in rows
+    ):
+        raise ValueError("Calibration requires valid, disjoint, benign Arm 0 scores; never retry invalids")
+    counts = Counter(r["source"] for r in rows)
+    if set(counts) != set(weights) or (expected_counts is not None and dict(counts) != expected_counts):
+        raise ValueError("Calibration source allocation does not match frozen rule")
+    row_weights = [weights[r["source"]] / counts[r["source"]] for r in rows]
+    rates = [sum(w for r, w in zip(rows, row_weights) if r["score"] >= t) for t in range(102)]
+    tau = next(t for t, rate in enumerate(rates) if rate <= 0.05 + 1e-12)
+    return {
+        "tau": tau,
+        "comparator": ">=",
+        "weights": weights,
+        "counts": dict(counts),
+        "families": dict(
+            Counter({s: len({r["family_id"] for r in rows if r["source"] == s}) for s in weights})
+        ),
+        "row_weights": dict(zip((r["case_id"] for r in rows), row_weights)),
+        "weighted_rate": rates[tau],
+        "unweighted_rate": sum(r["score"] >= tau for r in rows) / len(rows),
+        "neighbours": {str(t): rates[t] for t in range(max(0, tau - 1), min(101, tau + 1) + 1)},
+        "weight_only_ess": 1 / sum(w * w for w in row_weights),
+        "score_hash": digest(rows),
+    }
+
+
+def output_allowance(pilot_output_tokens: list[int], chunk_size: int, api_cap: int) -> int:
+    if len(pilot_output_tokens) < 2 or chunk_size < 1:
+        raise ValueError("Pilot and positive chunk size required")
+    x = np.asarray(pilot_output_tokens)
+    allowance = max(
+        2400,
+        ceil(x.mean() + 4 * x.std(ddof=1) / sqrt(chunk_size)),
+        ceil(np.quantile(x, 0.99, method="higher")),
+    )
+    if allowance > api_cap:
+        raise ValueError("Planning allowance exceeds API ceiling; review configuration")
+    return allowance
+
+
+def threshold_family_sensitivity(rows: list[dict], seed: int = 712, replicates: int = 500) -> dict:
+    rng = np.random.default_rng(seed)
+    families = sorted({r["family_id"] for r in rows})
+    thresholds = []
+    for _ in range(replicates):
+        sample = []
+        for j, family in enumerate(rng.choice(families, len(families), replace=True)):
+            sample += [{**r, "case_id": f"{j}:{r['case_id']}"} for r in rows if r["family_id"] == family]
+        if {r["source"] for r in sample} == {r["source"] for r in rows}:
+            thresholds.append(fit_threshold(sample)["tau"])
+    return {
+        "exploratory": True,
+        "replicates": len(thresholds),
+        "thresholds": thresholds,
+        "seed": seed,
+        "changes_operative_threshold": False,
+    }

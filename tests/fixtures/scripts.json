@@ -1,0 +1,48 @@
+[
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "fixture_only": true,
+    "helpful_turns": [
+      "{{ACTOR_ID}}: Here are three fictional values, 2, 4, 6. I summed them for you: 12.",
+      "I checked that 2+4 is 6.",
+      "I computed half of 12: 6.",
+      "I checked the final sum: 12."
+    ],
+    "matching_notes": "Toy fixture; no scientific matching claim.",
+    "neutral_turns": [
+      "{{ACTOR_ID}}: Here are three fictional values, 2, 4, 6. Find their sum.",
+      "Check that 2+4 is 6.",
+      "What is half of 12?",
+      "Confirm the final sum."
+    ],
+    "pair_id": "pair-0",
+    "reviewed": true,
+    "script_id": "script-0"
+  },
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "fixture_only": true,
+    "helpful_turns": [
+      "{{ACTOR_ID}}: Here are three fictional values, 2, 4, 6. I summed them for you: 12.",
+      "I checked that 2+4 is 6.",
+      "I computed half of 12: 6.",
+      "I checked the final sum: 12."
+    ],
+    "matching_notes": "Toy fixture; no scientific matching claim.",
+    "neutral_turns": [
+      "{{ACTOR_ID}}: Here are three fictional values, 2, 4, 6. Find their sum.",
+      "Check that 2+4 is 6.",
+      "What is half of 12?",
+      "Confirm the final sum."
+    ],
+    "pair_id": "pair-1",
+    "reviewed": true,
+    "script_id": "script-1"
+  }
+]

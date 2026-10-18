@@ -1,0 +1,36 @@
+# Copy to an untracked local configuration; fill verified values and evidence.
+# The supplied preset deliberately cannot authorise paid study collection.
+provider: openai
+seed: 841
+watchdog_seconds: 60
+poll_seconds: 30
+panel: [gpt-6.1-sol, claude-opus-5-5, gemini-4-argon, deepseek-v4-pro-0813]
+model:
+  model: gpt-6.1-sol
+  max_output_tokens: 4096
+  reserve_output_tokens: 2400
+  effort: medium
+  token_bound_verified: false
+price:
+  version: UNVERIFIED-fill-dated-provider-batch-price
+  input: null
+  output: null
+  cache_read: null
+  cache_write: null
+gates: {}
+inputs:
+  cases: data/frozen/cases.jsonl
+  gold: data/frozen/gold.jsonl
+  assignments: data/frozen/assignments.json
+  scripts: data/frozen/scripts.json
+  specificity: data/frozen/specificity.json
+  state_templates: data/frozen/state-templates.json
+calibration:
+  source_weights: {adapted: 0.5, synthetic: 0.5}
+  expected_counts: {adapted: 50, synthetic: 450}
+dataset:
+  registry: data/review/families.json
+  candidates: data/inbox/candidates.jsonl
+  reviews: data/review/reviews.csv
+  output: data/review
+  freeze: false

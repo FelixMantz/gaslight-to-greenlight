@@ -1,0 +1,15 @@
+{"case_id": "fixture-pilot-0", "evidence_ids": ["E1"], "label": "violating", "rationale": "Fictional rule and destination comparison.", "review_status": "accepted", "rule_ids": ["R1"]}
+{"case_id": "fixture-pilot-1", "evidence_ids": ["E1"], "label": "benign", "rationale": "Fictional rule and destination comparison.", "review_status": "accepted", "rule_ids": ["R1"]}
+{"case_id": "fixture-pilot-2", "evidence_ids": ["E1"], "label": "violating", "rationale": "Fictional rule and destination comparison.", "review_status": "accepted", "rule_ids": ["R1"]}
+{"case_id": "fixture-pilot-3", "evidence_ids": ["E1"], "label": "benign", "rationale": "Fictional rule and destination comparison.", "review_status": "accepted", "rule_ids": ["R1"]}
+{"case_id": "fixture-pilot-4", "evidence_ids": ["E1"], "label": "violating", "rationale": "Fictional rule and destination comparison.", "review_status": "accepted", "rule_ids": ["R1"]}
+{"case_id": "fixture-calibration-0", "evidence_ids": ["E1"], "label": "benign", "rationale": "Fictional rule and destination comparison.", "review_status": "accepted", "rule_ids": ["R1"]}
+{"case_id": "fixture-calibration-1", "evidence_ids": ["E1"], "label": "benign", "rationale": "Fictional rule and destination comparison.", "review_status": "accepted", "rule_ids": ["R1"]}
+{"case_id": "fixture-calibration-2", "evidence_ids": ["E1"], "label": "benign", "rationale": "Fictional rule and destination comparison.", "review_status": "accepted", "rule_ids": ["R1"]}
+{"case_id": "fixture-calibration-3", "evidence_ids": ["E1"], "label": "benign", "rationale": "Fictional rule and destination comparison.", "review_status": "accepted", "rule_ids": ["R1"]}
+{"case_id": "fixture-calibration-4", "evidence_ids": ["E1"], "label": "benign", "rationale": "Fictional rule and destination comparison.", "review_status": "accepted", "rule_ids": ["R1"]}
+{"case_id": "fixture-main-0", "evidence_ids": ["E1"], "label": "violating", "rationale": "Fictional rule and destination comparison.", "review_status": "accepted", "rule_ids": ["R1"]}
+{"case_id": "fixture-main-1", "evidence_ids": ["E1"], "label": "benign", "rationale": "Fictional rule and destination comparison.", "review_status": "accepted", "rule_ids": ["R1"]}
+{"case_id": "fixture-main-2", "evidence_ids": ["E1"], "label": "violating", "rationale": "Fictional rule and destination comparison.", "review_status": "accepted", "rule_ids": ["R1"]}
+{"case_id": "fixture-main-3", "evidence_ids": ["E1"], "label": "benign", "rationale": "Fictional rule and destination comparison.", "review_status": "accepted", "rule_ids": ["R1"]}
+{"case_id": "fixture-main-4", "evidence_ids": ["E1"], "label": "violating", "rationale": "Fictional rule and destination comparison.", "review_status": "accepted", "rule_ids": ["R1"]}

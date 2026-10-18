@@ -1,0 +1,73 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "title": "Case Id",
+      "type": "string"
+    },
+    "label": {
+      "enum": [
+        "benign",
+        "violating",
+        "authorised",
+        "prohibited"
+      ],
+      "title": "Label",
+      "type": "string"
+    },
+    "rule_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Rule Ids",
+      "type": "array"
+    },
+    "evidence_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidence Ids",
+      "type": "array"
+    },
+    "event_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Event Ids",
+      "type": "array"
+    },
+    "rationale": {
+      "title": "Rationale",
+      "type": "string"
+    },
+    "ambiguities": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Ambiguities",
+      "type": "array"
+    },
+    "review_status": {
+      "default": "unreviewed",
+      "enum": [
+        "unreviewed",
+        "accepted",
+        "excluded",
+        "adjudicated"
+      ],
+      "title": "Review Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "case_id",
+    "label",
+    "rationale"
+  ],
+  "title": "GoldRecord",
+  "type": "object"
+}

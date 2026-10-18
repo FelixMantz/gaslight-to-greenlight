@@ -1,0 +1,57 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "study_id": {
+      "title": "Study Id",
+      "type": "string"
+    },
+    "key": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Key"
+    },
+    "attempt": {
+      "title": "Attempt",
+      "type": "integer"
+    },
+    "time": {
+      "title": "Time",
+      "type": "string"
+    },
+    "function": {
+      "title": "Function",
+      "type": "string"
+    },
+    "source_commit": {
+      "title": "Source Commit",
+      "type": "string"
+    },
+    "branch": {
+      "title": "Branch",
+      "type": "string"
+    },
+    "detail": {
+      "additionalProperties": true,
+      "default": {},
+      "title": "Detail",
+      "type": "object"
+    }
+  },
+  "required": [
+    "study_id",
+    "key",
+    "attempt",
+    "time",
+    "function",
+    "source_commit",
+    "branch"
+  ],
+  "title": "BranchEvent",
+  "type": "object"
+}

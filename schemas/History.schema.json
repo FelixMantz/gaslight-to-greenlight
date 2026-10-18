@@ -1,0 +1,128 @@
+{
+  "$defs": {
+    "IdentityBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "benefactor_id": {
+          "title": "Benefactor Id",
+          "type": "string"
+        },
+        "unrelated_actor_id": {
+          "title": "Unrelated Actor Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "benefactor_id",
+        "unrelated_actor_id"
+      ],
+      "title": "IdentityBinding",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "history_id": {
+      "title": "History Id",
+      "type": "string"
+    },
+    "model_id": {
+      "title": "Model Id",
+      "type": "string"
+    },
+    "script_id": {
+      "title": "Script Id",
+      "type": "string"
+    },
+    "pair_id": {
+      "title": "Pair Id",
+      "type": "string"
+    },
+    "condition": {
+      "enum": [
+        "neutral",
+        "helpful",
+        "state"
+      ],
+      "title": "Condition",
+      "type": "string"
+    },
+    "binding": {
+      "$ref": "#/$defs/IdentityBinding"
+    },
+    "native_payload": {
+      "additionalProperties": true,
+      "title": "Native Payload",
+      "type": "object"
+    },
+    "readable_messages": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Readable Messages",
+      "type": "array"
+    },
+    "prefix_hash": {
+      "title": "Prefix Hash",
+      "type": "string"
+    },
+    "turn": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Turn"
+    },
+    "dependencies": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Dependencies",
+      "type": "array"
+    },
+    "grant_template_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Grant Template Id"
+    },
+    "base_prefix_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Base Prefix Id"
+    }
+  },
+  "required": [
+    "history_id",
+    "model_id",
+    "script_id",
+    "pair_id",
+    "condition",
+    "binding",
+    "native_payload",
+    "readable_messages",
+    "prefix_hash"
+  ],
+  "title": "History",
+  "type": "object"
+}

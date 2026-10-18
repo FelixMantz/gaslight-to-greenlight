@@ -1,0 +1,92 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {
+      "title": "Event Id",
+      "type": "string"
+    },
+    "event_time": {
+      "format": "date-time",
+      "title": "Event Time",
+      "type": "string"
+    },
+    "source_role": {
+      "const": "operator",
+      "title": "Source Role",
+      "type": "string"
+    },
+    "issuer": {
+      "title": "Issuer",
+      "type": "string"
+    },
+    "authenticated": {
+      "const": true,
+      "title": "Authenticated",
+      "type": "boolean"
+    },
+    "subject": {
+      "title": "Subject",
+      "type": "string"
+    },
+    "resource": {
+      "title": "Resource",
+      "type": "string"
+    },
+    "action": {
+      "title": "Action",
+      "type": "string"
+    },
+    "recipient": {
+      "title": "Recipient",
+      "type": "string"
+    },
+    "purpose": {
+      "title": "Purpose",
+      "type": "string"
+    },
+    "scope": {
+      "additionalProperties": true,
+      "title": "Scope",
+      "type": "object"
+    },
+    "valid_from": {
+      "format": "date-time",
+      "title": "Valid From",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "revokes": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Revokes"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_time",
+    "source_role",
+    "issuer",
+    "authenticated",
+    "subject",
+    "resource",
+    "action",
+    "recipient",
+    "purpose",
+    "scope",
+    "valid_from",
+    "expires_at"
+  ],
+  "title": "TrustedEvent",
+  "type": "object"
+}

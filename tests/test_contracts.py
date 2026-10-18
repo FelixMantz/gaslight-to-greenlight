@@ -1,0 +1,39 @@
+import json
+from pathlib import Path
+
+import pytest
+import g2g.models as models
+from g2g.state import TrustedEvent
+from g2g.freeze import readiness
+from g2g.util import ensure_local_runtime
+
+
+@pytest.mark.parametrize(
+    "contract",
+    [
+        models.VisiblePacket,
+        models.AuditCase,
+        models.GoldRecord,
+        models.IdentityBinding,
+        models.History,
+        models.Request,
+        models.Observation,
+        models.BranchEvent,
+        TrustedEvent,
+    ],
+)
+def test_exported_schema_matches_executable_contract(contract):
+    schema = json.loads(Path("schemas", contract.__name__ + ".schema.json").read_text())
+    assert schema == contract.model_json_schema()
+
+
+def test_paid_preset_and_synced_runtime_fail_closed(tmp_path):
+    import yaml
+
+    config = yaml.safe_load(Path("config/study.yaml").read_text())
+    with pytest.raises(ValueError, match="Live gate"):
+        readiness(tmp_path, config, "main")
+    with pytest.raises(ValueError):
+        ensure_local_runtime(tmp_path / "Dropbox/runtime", tmp_path / "project")
+    with pytest.raises(ValueError):
+        ensure_local_runtime(tmp_path / "project/runtime", tmp_path / "project")

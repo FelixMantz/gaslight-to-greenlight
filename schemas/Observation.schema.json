@@ -1,0 +1,86 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "observation_id": {
+      "title": "Observation Id",
+      "type": "string"
+    },
+    "key": {
+      "title": "Key",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "valid",
+        "invalid",
+        "refused",
+        "truncated",
+        "provider_error",
+        "success"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "final_text": {
+      "title": "Final Text",
+      "type": "string"
+    },
+    "raw": {
+      "additionalProperties": true,
+      "title": "Raw",
+      "type": "object"
+    },
+    "usage": {
+      "additionalProperties": true,
+      "title": "Usage",
+      "type": "object"
+    },
+    "actual_microusd": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Actual Microusd"
+    },
+    "price_version": {
+      "title": "Price Version",
+      "type": "string"
+    },
+    "batch_id": {
+      "title": "Batch Id",
+      "type": "string"
+    },
+    "collected_at": {
+      "title": "Collected At",
+      "type": "string"
+    },
+    "archive": {
+      "title": "Archive",
+      "type": "string"
+    },
+    "archive_sha256": {
+      "title": "Archive Sha256",
+      "type": "string"
+    }
+  },
+  "required": [
+    "observation_id",
+    "key",
+    "status",
+    "final_text",
+    "raw",
+    "usage",
+    "actual_microusd",
+    "price_version",
+    "batch_id",
+    "collected_at",
+    "archive",
+    "archive_sha256"
+  ],
+  "title": "Observation",
+  "type": "object"
+}

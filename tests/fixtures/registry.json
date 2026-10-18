@@ -1,0 +1,137 @@
+[
+  {
+    "decision_structure": "fictional fixture",
+    "domain": "disclosure",
+    "family_id": "fictional-pilot-structure-0",
+    "fixture_only": true,
+    "reviewed": true,
+    "split": "pilot",
+    "upstream_tasks": []
+  },
+  {
+    "decision_structure": "fictional fixture",
+    "domain": "disclosure",
+    "family_id": "fictional-pilot-structure-1",
+    "fixture_only": true,
+    "reviewed": true,
+    "split": "pilot",
+    "upstream_tasks": []
+  },
+  {
+    "decision_structure": "fictional fixture",
+    "domain": "disclosure",
+    "family_id": "fictional-pilot-structure-2",
+    "fixture_only": true,
+    "reviewed": true,
+    "split": "pilot",
+    "upstream_tasks": []
+  },
+  {
+    "decision_structure": "fictional fixture",
+    "domain": "disclosure",
+    "family_id": "fictional-pilot-structure-3",
+    "fixture_only": true,
+    "reviewed": true,
+    "split": "pilot",
+    "upstream_tasks": []
+  },
+  {
+    "decision_structure": "fictional fixture",
+    "domain": "disclosure",
+    "family_id": "fictional-pilot-structure-4",
+    "fixture_only": true,
+    "reviewed": true,
+    "split": "pilot",
+    "upstream_tasks": []
+  },
+  {
+    "decision_structure": "fictional fixture",
+    "domain": "disclosure",
+    "family_id": "fictional-calibration-structure-0",
+    "fixture_only": true,
+    "reviewed": true,
+    "split": "calibration",
+    "upstream_tasks": []
+  },
+  {
+    "decision_structure": "fictional fixture",
+    "domain": "disclosure",
+    "family_id": "fictional-calibration-structure-1",
+    "fixture_only": true,
+    "reviewed": true,
+    "split": "calibration",
+    "upstream_tasks": []
+  },
+  {
+    "decision_structure": "fictional fixture",
+    "domain": "disclosure",
+    "family_id": "fictional-calibration-structure-2",
+    "fixture_only": true,
+    "reviewed": true,
+    "split": "calibration",
+    "upstream_tasks": []
+  },
+  {
+    "decision_structure": "fictional fixture",
+    "domain": "disclosure",
+    "family_id": "fictional-calibration-structure-3",
+    "fixture_only": true,
+    "reviewed": true,
+    "split": "calibration",
+    "upstream_tasks": []
+  },
+  {
+    "decision_structure": "fictional fixture",
+    "domain": "disclosure",
+    "family_id": "fictional-calibration-structure-4",
+    "fixture_only": true,
+    "reviewed": true,
+    "split": "calibration",
+    "upstream_tasks": []
+  },
+  {
+    "decision_structure": "fictional fixture",
+    "domain": "disclosure",
+    "family_id": "fictional-main-structure-0",
+    "fixture_only": true,
+    "reviewed": true,
+    "split": "main",
+    "upstream_tasks": []
+  },
+  {
+    "decision_structure": "fictional fixture",
+    "domain": "disclosure",
+    "family_id": "fictional-main-structure-1",
+    "fixture_only": true,
+    "reviewed": true,
+    "split": "main",
+    "upstream_tasks": []
+  },
+  {
+    "decision_structure": "fictional fixture",
+    "domain": "disclosure",
+    "family_id": "fictional-main-structure-2",
+    "fixture_only": true,
+    "reviewed": true,
+    "split": "main",
+    "upstream_tasks": []
+  },
+  {
+    "decision_structure": "fictional fixture",
+    "domain": "disclosure",
+    "family_id": "fictional-main-structure-3",
+    "fixture_only": true,
+    "reviewed": true,
+    "split": "main",
+    "upstream_tasks": []
+  },
+  {
+    "decision_structure": "fictional fixture",
+    "domain": "disclosure",
+    "family_id": "fictional-main-structure-4",
+    "fixture_only": true,
+    "reviewed": true,
+    "split": "main",
+    "upstream_tasks": []
+  }
+]

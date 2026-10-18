@@ -1,0 +1,28 @@
+provider: fixture
+seed: 841
+watchdog_seconds: 2
+poll_seconds: 0.01
+model:
+  model: offline-fixture-v1
+  fixture: true
+  max_output_tokens: 4096
+  reserve_output_tokens: 2400
+price:
+  version: fixture-zero-cost-v1
+  input: 0
+  output: 0
+  cache_read: 0
+  cache_write: 0
+inputs:
+  cases: tests/fixtures/cases.jsonl
+  gold: tests/fixtures/gold.jsonl
+  assignments: tests/fixtures/assignments.json
+  scripts: tests/fixtures/scripts.json
+  specificity: tests/fixtures/specificity.json
+calibration:
+  source_weights: {synthetic: 1.0}
+  expected_counts: {synthetic: 5}
+dataset:
+  registry: tests/fixtures/registry.json
+  candidates: tests/fixtures/candidates.jsonl
+  output: data/fixture-review

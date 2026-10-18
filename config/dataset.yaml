@@ -1,0 +1,19 @@
+# Configure verified local endpoint/price/gate values before any generation calls.
+# Imported/manual candidate preparation can use fixture provider with no stages.
+provider: fixture
+seed: 841
+model: {model: offline-fixture-v1, fixture: true, max_output_tokens: 4096, reserve_output_tokens: 2400}
+price: {version: fixture-zero-cost-v1, input: 0, output: 0, cache_read: 0, cache_write: 0}
+inputs: {}
+dataset:
+  registry: data/review/families.json
+  candidates: data/inbox/candidates.jsonl
+  reviews: data/review/reviews.csv
+  output: data/review
+  freeze: false
+  second_review_ids: []  # Freeze a stratified sample before labels/effects are inspected.
+  generation_stages: []
+  # source_manifest: data/provenance/source-manifest.json
+  # source_mappings: data/provenance/pre-action-mappings.json
+  # generation_stages:
+  #   - {prompt: B, jobs: data/inbox/generation-jobs.jsonl, registry_reviewed: true}

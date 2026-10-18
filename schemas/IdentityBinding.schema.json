@@ -1,0 +1,19 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "benefactor_id": {
+      "title": "Benefactor Id",
+      "type": "string"
+    },
+    "unrelated_actor_id": {
+      "title": "Unrelated Actor Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "benefactor_id",
+    "unrelated_actor_id"
+  ],
+  "title": "IdentityBinding",
+  "type": "object"
+}

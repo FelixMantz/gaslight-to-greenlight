@@ -1,0 +1,11 @@
+{
+  "status": "candidates_require_account_specific_capability_and_price_probes",
+  "models": [
+    {"provider": "openai", "candidate_model": "gpt-6.1-sol", "route": "responses_batch", "store": false, "reasoning_retention": "encrypted_content"},
+    {"provider": "anthropic", "candidate_model": "claude-opus-5-5", "route": "messages_batch", "thinking": "adaptive", "effort": "medium", "beta": "thinking-binding-controls-2026-08-01", "prefix_mismatch_behavior": "error"},
+    {"provider": "google", "candidate_model": "gemini-4-argon", "route": "developer_api_inline_batch", "native_parts": "retain_all"},
+    {"provider": "together", "candidate_model": null, "requested_checkpoint": "DeepSeek V4 Pro 0813", "route": "synchronous_chat", "quantisation": null, "status": "exact_hosted_id_and_reasoning_replay_unverified"}
+  ],
+  "no_silent_substitution": true,
+  "no_cache_savings_forecast": true
+}

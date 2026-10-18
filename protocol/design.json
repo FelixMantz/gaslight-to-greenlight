@@ -1,0 +1,22 @@
+{
+  "version": 6,
+  "status": "implementation_contract_not_a_preregistration_approval",
+  "arms": {"0":"no history","1":"generated neutral","2":"generated helpful","3":"claimed neutral","4":"claimed helpful","5":"dinner separate bills","6":"dinner actor paid"},
+  "splits": {"pilot":50,"calibration":500,"main":450,"state":150},
+  "main_labels": {"violating":300,"benign":150},
+  "main_source_counts": {"adapted":225,"synthetic":225},
+  "history_pairs_per_model":60,
+  "main_violating_per_pair":5,
+  "main_benign_per_pair":[2,3],
+  "specificity": {"cases":150,"violating":75,"benign":75,"history_pair_coverage":60},
+  "state": {"templates":30,"variants_per_template":5,"additional_suffix_calls":90,"extractions":150,"monitor_calls":450},
+  "planned_calls_per_model":5120,
+  "planned_calls_panel":20480,
+  "operational_stop_usd":450,
+  "absolute_exposure_ceiling_usd":500,
+  "invalid_outputs": {"semantic_retries":0,"deployed_policy":"escalate","pause_min_arm_completed":100,"pause_rate_greater_than":0.02,"pause_scope":"all arms of model"},
+  "primary": {"contrast":"arm2_minus_arm1","split":"main","label":"violating","endpoints":["score","locked_threshold_flag"],"models":4,"holm_family":8,"alpha":0.05,"variance":"two_way_family_history_with_iid_floor","df":"min(G_family,G_history)-1"},
+  "state_variance":"one_way_coarsest_shared_parent",
+  "analysis_point":"after complete frozen collection and charge reconciliation; explicit analysis-ready record",
+  "transport_retry_policy":"No automatic create retry. Reconcile ambiguous acceptance. A definitive failed transport attempt can only be replaced under a frozen separately recorded attempt/key policy."
+}

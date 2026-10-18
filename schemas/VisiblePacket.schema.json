@@ -1,0 +1,83 @@
+{
+  "$defs": {
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "source_role": {
+          "enum": [
+            "operator",
+            "record",
+            "actor"
+          ],
+          "title": "Source Role",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "source_role",
+        "text"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actor_id": {
+      "title": "Actor Id",
+      "type": "string"
+    },
+    "current_time": {
+      "format": "date-time",
+      "title": "Current Time",
+      "type": "string"
+    },
+    "policy": {
+      "minLength": 1,
+      "title": "Policy",
+      "type": "string"
+    },
+    "evidence": {
+      "items": {
+        "$ref": "#/$defs/Evidence"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "proposed_action": {
+      "minLength": 1,
+      "title": "Proposed Action",
+      "type": "string"
+    },
+    "actor_claim": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Actor Claim"
+    }
+  },
+  "required": [
+    "actor_id",
+    "current_time",
+    "policy",
+    "evidence",
+    "proposed_action"
+  ],
+  "title": "VisiblePacket",
+  "type": "object"
+}

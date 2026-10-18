@@ -1,0 +1,89 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "key": {
+      "title": "Key",
+      "type": "string"
+    },
+    "study_id": {
+      "title": "Study Id",
+      "type": "string"
+    },
+    "phase": {
+      "title": "Phase",
+      "type": "string"
+    },
+    "model_id": {
+      "title": "Model Id",
+      "type": "string"
+    },
+    "purpose": {
+      "enum": [
+        "decision",
+        "history",
+        "extraction",
+        "generation",
+        "probe"
+      ],
+      "title": "Purpose",
+      "type": "string"
+    },
+    "block_id": {
+      "title": "Block Id",
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    },
+    "config_hash": {
+      "title": "Config Hash",
+      "type": "string"
+    },
+    "planning_microusd": {
+      "minimum": 0,
+      "title": "Planning Microusd",
+      "type": "integer"
+    },
+    "maximum_microusd": {
+      "minimum": 0,
+      "title": "Maximum Microusd",
+      "type": "integer"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "default": {},
+      "title": "Metadata",
+      "type": "object"
+    },
+    "dependencies": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Dependencies",
+      "type": "array"
+    },
+    "attempt": {
+      "default": 1,
+      "minimum": 1,
+      "title": "Attempt",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "key",
+    "study_id",
+    "phase",
+    "model_id",
+    "purpose",
+    "block_id",
+    "payload",
+    "config_hash",
+    "planning_microusd",
+    "maximum_microusd"
+  ],
+  "title": "Request",
+  "type": "object"
+}

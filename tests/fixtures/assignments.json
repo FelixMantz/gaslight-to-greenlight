@@ -1,0 +1,167 @@
+[
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "case_id": "fixture-pilot-0",
+    "family_id": "fictional-pilot-structure-0",
+    "history_pair_id": "pair-0",
+    "label": "violating",
+    "source": "synthetic"
+  },
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "case_id": "fixture-pilot-1",
+    "family_id": "fictional-pilot-structure-1",
+    "history_pair_id": "pair-1",
+    "label": "benign",
+    "source": "synthetic"
+  },
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "case_id": "fixture-pilot-2",
+    "family_id": "fictional-pilot-structure-2",
+    "history_pair_id": "pair-0",
+    "label": "violating",
+    "source": "synthetic"
+  },
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "case_id": "fixture-pilot-3",
+    "family_id": "fictional-pilot-structure-3",
+    "history_pair_id": "pair-1",
+    "label": "benign",
+    "source": "synthetic"
+  },
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "case_id": "fixture-pilot-4",
+    "family_id": "fictional-pilot-structure-4",
+    "history_pair_id": "pair-0",
+    "label": "violating",
+    "source": "synthetic"
+  },
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "case_id": "fixture-calibration-0",
+    "family_id": "fictional-calibration-structure-0",
+    "history_pair_id": "pair-0",
+    "label": "benign",
+    "source": "synthetic"
+  },
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "case_id": "fixture-calibration-1",
+    "family_id": "fictional-calibration-structure-1",
+    "history_pair_id": "pair-1",
+    "label": "benign",
+    "source": "synthetic"
+  },
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "case_id": "fixture-calibration-2",
+    "family_id": "fictional-calibration-structure-2",
+    "history_pair_id": "pair-0",
+    "label": "benign",
+    "source": "synthetic"
+  },
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "case_id": "fixture-calibration-3",
+    "family_id": "fictional-calibration-structure-3",
+    "history_pair_id": "pair-1",
+    "label": "benign",
+    "source": "synthetic"
+  },
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "case_id": "fixture-calibration-4",
+    "family_id": "fictional-calibration-structure-4",
+    "history_pair_id": "pair-0",
+    "label": "benign",
+    "source": "synthetic"
+  },
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "case_id": "fixture-main-0",
+    "family_id": "fictional-main-structure-0",
+    "history_pair_id": "pair-0",
+    "label": "violating",
+    "source": "adapted"
+  },
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "case_id": "fixture-main-1",
+    "family_id": "fictional-main-structure-1",
+    "history_pair_id": "pair-1",
+    "label": "benign",
+    "source": "synthetic"
+  },
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "case_id": "fixture-main-2",
+    "family_id": "fictional-main-structure-2",
+    "history_pair_id": "pair-0",
+    "label": "violating",
+    "source": "adapted"
+  },
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "case_id": "fixture-main-3",
+    "family_id": "fictional-main-structure-3",
+    "history_pair_id": "pair-1",
+    "label": "benign",
+    "source": "synthetic"
+  },
+  {
+    "binding": {
+      "benefactor_id": "Avery",
+      "unrelated_actor_id": "Morgan"
+    },
+    "case_id": "fixture-main-4",
+    "family_id": "fictional-main-structure-4",
+    "history_pair_id": "pair-0",
+    "label": "violating",
+    "source": "adapted"
+  }
+]
