@@ -53,3 +53,55 @@ def audit_history_balance(histories: list[dict]) -> dict:
         "mean_shift_diagnostic": abs(shift) > 0.05,
         "selection_rule": "Retain all technically valid histories; markers are review diagnostics only",
     }
+
+
+def verify_history_record(history: dict, journal, codec, model_id: str):
+    """Verify derived native/readable histories against authoritative request/response archives."""
+    if history.get("model_id") != model_id or len(history.get("dependencies", [])) != 1:
+        raise ValueError("History lacks its generating model/request reference")
+    key = history["dependencies"][0]
+    last = journal.get(key)
+    if not last or last["state"] != "Collected":
+        raise ValueError("History generating observation is not durably collected")
+    import json
+
+    request = json.loads(last["request_json"])
+    observation = journal.replay(key)
+    actual = codec.advance_history(request["payload"], observation["raw"])
+    if (
+        digest(actual) != history["prefix_hash"]
+        or digest(history["native_payload"]) != history["prefix_hash"]
+    ):
+        raise ValueError("Derived native history differs from journal archive")
+    messages = []
+    seen = set()
+    while key:
+        if key in seen:
+            raise ValueError("History dependency cycle")
+        seen.add(key)
+        row = journal.get(key)
+        if not row or row["state"] != "Collected":
+            raise ValueError("History dependency not collected")
+        request = json.loads(row["request_json"])
+        if request["model_id"] != model_id or request["purpose"] != "history":
+            raise ValueError("Unexpected history dependency")
+        result = journal.replay(key)
+        field = (
+            "input"
+            if codec.provider == "openai"
+            else "contents"
+            if codec.provider == "google"
+            else "messages"
+        )
+        current = request["payload"][field][-1]
+        text = current["parts"][0]["text"] if codec.provider == "google" else current["content"]
+        messages[:0] = [
+            {"role": "user", "content": text},
+            {"role": "assistant", "content": result["final_text"]},
+        ]
+        dependencies = request["dependencies"]
+        if len(dependencies) > 1:
+            raise ValueError("History must have one linear generating prefix")
+        key = dependencies[0] if dependencies else None
+    if digest(messages) != digest(history["readable_messages"]):
+        raise ValueError("Readable history differs from authoritative archived turns")

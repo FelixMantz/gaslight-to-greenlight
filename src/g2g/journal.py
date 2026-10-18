@@ -65,7 +65,7 @@ class Journal:
     def __init__(self, path: Path, project: Path, source_commit: str = "fixture", readonly: bool = False):
         self.path, self.project, self.source_commit = path, project, source_commit
         if readonly:
-            self.db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+            self.db = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
         else:
             path.parent.mkdir(parents=True, exist_ok=True)
             self.db = sqlite3.connect(path)
@@ -329,7 +329,7 @@ class Journal:
         sha = hashlib.sha256(data).hexdigest()
         path = self.project / "runs" / "batches" / study / f"chunk_{sha}.jsonl.gz"
         atomic_write(path, data, immutable=True)
-        return str(path.relative_to(self.project)), sha
+        return path.relative_to(self.project).as_posix(), sha
 
     def collect(self, key, result: dict, batch_id: str):
         row = self.get(key)
@@ -402,6 +402,32 @@ class Journal:
                 },
             )
         return observation
+
+    def lock_threshold(self, study: str, record: dict | None):
+        key = "threshold:" + study
+        row = self.db.execute("SELECT value FROM controls WHERE key=?", (key,)).fetchone()
+        if record is None:
+            if row is None:
+                raise ValueError("Calibration threshold is not journal-locked")
+            locked = json.loads(row[0])
+        else:
+            locked = record
+            if row is not None and digest(json.loads(row[0])) != digest(record):
+                raise ValueError("Locked calibration threshold differs")
+            with self.db:
+                self.db.execute(
+                    "INSERT OR IGNORE INTO controls VALUES(?,?)", (key, canonical(record).decode())
+                )
+        path = self.project / "runs" / study / "threshold.json"
+        if path.exists() and digest(json.loads(path.read_text(encoding="utf-8"))) != digest(locked):
+            raise ValueError("Calibration threshold file differs from journal lock")
+        if record is not None:
+            from g2g.util import write_json
+
+            write_json(path, locked, immutable=True)
+        elif not path.exists():
+            raise ValueError("Calibration threshold file missing")
+        return locked
 
     def snapshot_journal(self):
         target = self.project / "runs" / "journal_snapshot.sqlite"

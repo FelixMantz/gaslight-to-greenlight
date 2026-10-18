@@ -17,6 +17,15 @@ class NativeCodec:
             request = copy.deepcopy(native_prefix)
             if request["model"] != self.settings["model"]:
                 raise ValueError("Cross-model native replay forbidden")
+            actual_cap = (
+                request.get("max_output_tokens")
+                if p == "openai"
+                else request.get("generationConfig", {}).get("maxOutputTokens")
+                if p == "google"
+                else request.get("max_tokens")
+            )
+            if actual_cap != self.settings.get("max_output_tokens", 4096):
+                raise ValueError("Native prefix API cap differs from reserved configuration")
             # Native prefix includes frozen settings and system. Only append new current input.
             current = messages[-1]
             if p == "google":
@@ -104,21 +113,23 @@ class NativeCodec:
             status = (
                 "refused"
                 if any(c.get("type") == "refusal" for c in blocks)
+                else "refused"
+                if (raw.get("incomplete_details") or {}).get("reason") == "content_filter"
                 else "truncated"
                 if raw.get("status") == "incomplete"
                 else "provider_error"
-                if raw.get("status") not in ("completed", None)
+                if raw.get("status") != "completed"
                 else "success"
             )
-            u = raw.get("usage", {})
+            u = raw.get("usage") or {}
             return (
                 text,
                 status,
                 {
                     "input_tokens": u.get("input_tokens"),
                     "output_tokens": u.get("output_tokens"),
-                    "cache_read_tokens": u.get("input_tokens_details", {}).get("cached_tokens", 0),
-                    "reasoning_tokens_in_output": u.get("output_tokens_details", {}).get(
+                    "cache_read_tokens": (u.get("input_tokens_details") or {}).get("cached_tokens", 0),
+                    "reasoning_tokens_in_output": (u.get("output_tokens_details") or {}).get(
                         "reasoning_tokens", 0
                     ),
                 },
@@ -128,12 +139,14 @@ class NativeCodec:
             content = raw.get("content", [])
             status = (
                 "truncated"
-                if raw.get("stop_reason") == "max_tokens"
+                if raw.get("stop_reason") in ("max_tokens", "model_context_window_exceeded")
                 else "refused"
                 if raw.get("stop_reason") == "refusal"
                 else "success"
+                if raw.get("stop_reason") in ("end_turn", "stop_sequence")
+                else "provider_error"
             )
-            u = raw.get("usage", {})
+            u = raw.get("usage") or {}
             # Anthropic reports uncached input separately from cache creation/read.
             return (
                 "".join(c.get("text", "") for c in content if c["type"] == "text"),
@@ -164,7 +177,15 @@ class NativeCodec:
                 if not part.get("thought")
             )
             reason = candidate.get("finishReason")
-            status = "truncated" if reason == "MAX_TOKENS" else "success" if reason == "STOP" else "refused"
+            status = (
+                "truncated"
+                if reason == "MAX_TOKENS"
+                else "success"
+                if reason == "STOP"
+                else "refused"
+                if reason in ("SAFETY", "RECITATION", "BLOCKLIST", "PROHIBITED_CONTENT", "SPII")
+                else "provider_error"
+            )
             u = raw.get("usageMetadata", {})
             return (
                 text,
@@ -178,11 +199,19 @@ class NativeCodec:
                     "reasoning_tokens_in_output": u.get("thoughtsTokenCount", 0),
                 },
             )
-        choice = raw.get("choices", [{}])[0]
+        choice = (raw.get("choices") or [{}])[0]
         reason = choice.get("finish_reason")
         msg = choice.get("message", {})
-        status = "truncated" if reason == "length" else "refused" if msg.get("refusal") else "success"
-        u = raw.get("usage", {})
+        status = (
+            "truncated"
+            if reason == "length"
+            else "refused"
+            if msg.get("refusal") or reason == "content_filter"
+            else "success"
+            if reason == "stop"
+            else "provider_error"
+        )
+        u = raw.get("usage") or {}
         return (
             msg.get("content") or "",
             status,

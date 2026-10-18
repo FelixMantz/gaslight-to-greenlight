@@ -34,14 +34,31 @@ def analyse(
         if tau is None:
             continue
         applied = apply_threshold(d, tau)
+        pipeline_invalid = (
+            req["phase"] == "state"
+            and meta.get("protocol") == "structured"
+            and meta.get("extraction_valid") is False
+        )
+        if pipeline_invalid:
+            applied = {
+                "operative": "escalate",
+                "flag": None,
+                "flag_or_escalate": True,
+                "reason": "invalid_extracted_state",
+            }
         cid = meta["case_id"]
         label = gold[cid]["label"]
         group = utility[f"{req['model_id']}:{req['phase']}:{meta.get('arm', meta.get('protocol'))}:{label}"]
         group["total"] += 1
-        group["invalid"] += d.status != "valid"
+        group["invalid"] += d.status != "valid" or pipeline_invalid
         group["flag_or_escalate"] += applied["flag_or_escalate"]
         group["disagreements"] += applied.get("recommendation_disagreement", False)
-        value = {"score": d.score, "flag": applied["flag"], "meta": meta, "valid": d.status == "valid"}
+        value = {
+            "score": d.score,
+            "flag": applied["flag"],
+            "meta": meta,
+            "valid": d.status == "valid" and not pipeline_invalid,
+        }
         if req["phase"] == "main":
             all_main[(req["model_id"], cid)][meta["arm"]] = {**value, "label": label}
         if req["phase"] == "specificity":
@@ -137,7 +154,7 @@ def analyse(
                 benefactor = all_main.get((m, cid), {})
                 if m != model or not {1, 2} <= set(unrelated) or not {1, 2} <= set(benefactor):
                     continue
-                if not all(x["valid"] for x in list(unrelated.values()) + list(benefactor.values())):
+                if not all(group[arm]["valid"] for group in (unrelated, benefactor) for arm in (1, 2)):
                     continue
                 difference = (
                     float(unrelated[2][endpoint])
@@ -243,6 +260,7 @@ def report(journal, study_id, root: Path, analysis=False, debug_key=None):
                 "request": request,
                 "observation": observation,
                 "offline_parser": decision.__dict__ if decision else None,
+                "reconciled_actual_microusd": by_key[observation["key"]]["actual"],
             }
         )
     destination = root / "reports" / study_id
@@ -264,13 +282,16 @@ def report(journal, study_id, root: Path, analysis=False, debug_key=None):
             + "</pre></details>"
         )
     if analysis:
-        marker = root / "runs" / study_id / "analysis-ready.json"
-        if not marker.exists() and not manifest["fixture_only"]:
-            raise ValueError("Confirmatory analysis point is not frozen/completed; status remains available")
+        from g2g.freeze import verify_frozen_inputs
+
+        verify_frozen_inputs(root, manifest)
+        if not manifest["fixture_only"]:
+            from g2g.operations import validate_analysis_seal
+
+            validate_analysis_seal(journal, study_id, root)
         config = manifest["config"]
         gold = {g["case_id"]: g for g in read_jsonl(root / config["inputs"]["gold"])}
-        threshold_path = root / "runs" / study_id / "threshold.json"
-        threshold = json.loads(threshold_path.read_text())
+        threshold = journal.lock_threshold(study_id, None)
         results = analyse(
             observations,
             rows,
@@ -279,6 +300,7 @@ def report(journal, study_id, root: Path, analysis=False, debug_key=None):
             config.get("panel", [config["model"]["model"]]),
             manifest["fixture_only"],
         )
+        results["state_extraction"] = state_extraction_report(observations, rows, root, config)
         write_json(destination / "analysis.json", results)
         content += ["<h2>Analysis</h2><pre>" + html.escape(json.dumps(results, indent=2)) + "</pre>"]
     content.append("</body></html>")
@@ -310,3 +332,45 @@ def export_control_arena(log_path: Path, destination: Path):
         },
     )
     return len(rows)
+
+
+def state_extraction_report(observations, requests, root, config):
+    from g2g.state import validate_extracted_state, score_ledger
+    from g2g.compiler import compile_identity_bindings
+    from g2g.models import IdentityBinding
+
+    by_key = {r["key"]: json.loads(r["request_json"]) for r in requests}
+    templates = {}
+    if config.get("inputs", {}).get("state_templates"):
+        templates = {
+            t["grant_template_id"]: t
+            for t in json.loads((root / config["inputs"]["state_templates"]).read_text(encoding="utf-8"))
+        }
+    result = []
+    for observation in observations:
+        request = by_key[observation["key"]]
+        if request["purpose"] != "extraction":
+            continue
+        meta = request["metadata"]
+        ledger, error = validate_extracted_state(observation["final_text"], observation["status"])
+        gold_ledger = templates.get(meta["grant_template_id"], {}).get("gold_ledger")
+        if gold_ledger is not None and "by_case" in gold_ledger:
+            gold_ledger = gold_ledger["by_case"].get(meta["case_id"])
+        if gold_ledger is not None:
+            gold_ledger = compile_identity_bindings(
+                gold_ledger, IdentityBinding.model_validate(meta["binding"])
+            )["compiled"]
+        result.append(
+            {
+                "case_id": meta["case_id"],
+                "grant_template_id": meta["grant_template_id"],
+                "observation_id": observation["observation_id"],
+                "status": "invalid" if error else "valid",
+                "reason": error,
+                "ledger_errors": score_ledger(ledger, gold_ledger)
+                if not error and gold_ledger is not None
+                else None,
+                "gold_ledger_available": gold_ledger is not None,
+            }
+        )
+    return result

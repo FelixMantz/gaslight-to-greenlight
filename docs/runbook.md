@@ -17,9 +17,9 @@ gates:
     evidence_file: data/capabilities/openai-endpoint.json
 ```
 
-The evidence JSON must contain `passed: true`, a `config_hash` matching `g2g.util.digest(preset['model'])`, and the reviewer-owned evidence explaining the conclusion. This is a scientific signoff record, not an automatic proof. Its hash is frozen with the study. Required gate names are in `freeze.readiness()`; confirmatory phases add pilot, replay, dataset, source, script, protocol and simulation gates.
+The evidence JSON must contain `passed: true`, a `config_hash` matching `g2g.freeze.capability_config_hash(preset)`, and the reviewer-owned evidence explaining the conclusion. This is a scientific signoff record, not an automatic proof. Its hash is frozen with the study. Required gate names are in `freeze.readiness()`; confirmatory phases add pilot, replay, dataset, source, script, protocol and simulation gates.
 
-Keep the source SHA, package environment, prompts, cases, labels, assignments, weights and gates unchanged after freeze. `resume` verifies their hashes. A changed configuration requires a new named study and an explicitly reviewed protocol decision.
+Keep the source SHA, package environment, prompts, cases, labels, assignments, weights and gates unchanged after freeze. `resume` verifies their hashes. A changed configuration requires a new named study and an explicitly reviewed protocol decision. Provider, model settings and prices are all included in the capability evidence hash. Tracked and untracked source changes are rejected on resume, even if HEAD has not moved.
 
 ## Inspect and scheduling
 

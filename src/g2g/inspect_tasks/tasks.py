@@ -53,8 +53,7 @@ def audit_task(specs: list[dict], context):
             try:
                 request, messages = compile_spec(spec, context)
             except BaseException as exc:
-                context.coordinator.halted = True
-                context.coordinator._fail(context.coordinator.expected[spec["block_id"]], exc)
+                context.coordinator.abort(exc)
                 with context.journal.db:
                     context.journal.event(
                         context.study_id, spec["key"], "compile_audit_request", "failed", {"error": str(exc)}

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from math import ceil, sqrt
+from math import ceil, sqrt, isfinite
 
 import numpy as np
 
@@ -11,8 +11,12 @@ from g2g.util import digest
 def fit_threshold(
     rows: list[dict], weights: dict[str, float] | None = None, expected_counts: dict[str, int] | None = None
 ) -> dict:
-    weights = weights or {"adapted": 0.5, "synthetic": 0.5}
-    if abs(sum(weights.values()) - 1) > 1e-12 or any(w <= 0 for w in weights.values()):
+    weights = {"adapted": 0.5, "synthetic": 0.5} if weights is None else weights
+    if (
+        not weights
+        or any(type(w) not in (int, float) or not isfinite(w) or w <= 0 for w in weights.values())
+        or abs(sum(weights.values()) - 1) > 1e-12
+    ):
         raise ValueError("Positive source weights must sum to one")
     if len({r["case_id"] for r in rows}) != len(rows):
         raise ValueError("Duplicate calibration case")
@@ -50,7 +54,12 @@ def fit_threshold(
 
 
 def output_allowance(pilot_output_tokens: list[int], chunk_size: int, api_cap: int) -> int:
-    if len(pilot_output_tokens) < 2 or chunk_size < 1:
+    if (
+        len(pilot_output_tokens) < 2
+        or type(chunk_size) is not int
+        or chunk_size < 1
+        or any(type(t) is not int or t < 0 for t in pilot_output_tokens)
+    ):
         raise ValueError("Pilot and positive chunk size required")
     x = np.asarray(pilot_output_tokens)
     allowance = max(

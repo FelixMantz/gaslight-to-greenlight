@@ -104,6 +104,8 @@ def generate_cases(records: list[dict], registry: list[dict]):
     for record in records:
         packet = AuditCase.model_validate({k: v for k, v in record.items() if k != "gold"})
         label = GoldRecord.model_validate({"case_id": packet.case_id, **record["gold"]})
+        if label.case_id != packet.case_id:
+            raise ValueError("Gold case ID differs from visible case")
         if packet.family_id not in families or families[packet.family_id]["split"] != packet.split:
             raise ValueError("Case violates frozen family registry")
         if packet.split == "calibration" and label.label != "benign":
@@ -138,6 +140,8 @@ def blinded_review_queue(cases: list[AuditCase], destination: Path, seed=42):
 
 def freeze_splits(cases, gold, registry, reviews_path: Path, destination: Path, second_review_ids=None):
     registry = assign_splits(registry, 841)
+    if len(cases) != len(gold) or any(c.case_id != g.case_id for c, g in zip(cases, gold)):
+        raise ValueError("Visible cases and gold must align exactly before review freeze")
     reviews = list(csv.DictReader(reviews_path.open(encoding="utf-8")))
     by_case = {}
     for review in reviews:
@@ -145,10 +149,17 @@ def freeze_splits(cases, gold, registry, reviews_path: Path, destination: Path, 
     final = []
     for case, g in zip(cases, gold):
         rows = by_case.get(case.case_id, [])
-        if not rows or any(
-            r["ambiguous"].lower() == "true" and r["adjudicated"].lower() != "true" for r in rows
-        ):
-            raise ValueError("Every case needs human review and ambiguity resolution")
+        if not rows or any(not r["reviewer"].strip() or not r["rationale"].strip() for r in rows):
+            raise ValueError("Every case needs an identified reviewer and rationale")
+        for row in rows:
+            if any(
+                row[field].lower() not in ("true", "false")
+                for field in ("ambiguous", "second_pass", "adjudicated")
+            ):
+                raise ValueError("Review flags must be explicit true/false")
+        adjudications = [r for r in rows if r["adjudicated"].lower() == "true"]
+        if any(r["ambiguous"].lower() == "true" for r in rows) and not adjudications:
+            raise ValueError("Ambiguous cases require explicit adjudication")
         requires_second = case.case_id in (second_review_ids or []) or any(
             r["ambiguous"].lower() == "true" for r in rows
         )
@@ -156,10 +167,12 @@ def freeze_splits(cases, gold, registry, reviews_path: Path, destination: Path, 
             len({r["reviewer"] for r in rows}) >= 2 or any(r["second_pass"].lower() == "true" for r in rows)
         ):
             raise ValueError("Ambiguous and frozen stratified-sample cases need a second blinded review/pass")
-        resolved = [r for r in rows if r["adjudicated"].lower() == "true"] or rows
+        resolved = adjudications[-1:] if adjudications else rows
         labels = {r["judgement"] for r in resolved}
         if len(labels) != 1 or next(iter(labels)) not in {"benign", "violating", "authorised", "prohibited"}:
             raise ValueError("Disagreement requires adjudication")
+        if case.split == "calibration" and next(iter(labels)) != "benign":
+            raise ValueError("Calibration adjudication is not benign; revise allocation before freeze")
         # Human adjudication may correct provisional generator gold.
         last = resolved[-1]
         final.append(
@@ -193,12 +206,14 @@ def freeze_splits(cases, gold, registry, reviews_path: Path, destination: Path, 
 
 
 def generate_dataset(root: Path, config: dict) -> dict:
-    registry = generate_families(json.loads((root / config["registry"]).read_text()))
+    registry = generate_families(json.loads((root / config["registry"]).read_text(encoding="utf-8")))
     records = read_jsonl(root / config["candidates"])
     provenance = dict(config.get("provenance", {}))
     if config.get("source_manifest") and config.get("source_mappings"):
-        inventory = inventory_sources(json.loads((root / config["source_manifest"]).read_text()), root)
-        mappings = json.loads((root / config["source_mappings"]).read_text())
+        inventory = inventory_sources(
+            json.loads((root / config["source_manifest"]).read_text(encoding="utf-8")), root
+        )
+        mappings = json.loads((root / config["source_mappings"]).read_text(encoding="utf-8"))
         for item in ingest_benchmarks(inventory, mappings, root):
             case = item["case"]
             mapping = item["provenance"]["mapping"]

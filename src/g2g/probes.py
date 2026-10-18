@@ -4,6 +4,7 @@ import copy
 import json
 
 from g2g.compiler import SYSTEM
+from g2g.freeze import capability_config_hash
 from g2g.util import digest, write_json
 
 
@@ -89,10 +90,12 @@ async def probe_replay(engine):
             dependencies=dependency,
             metadata={"probe": mode, "prefix_hash": digest(replay)},
         )
-        outputs[mode] = (await engine.wave(f"probe-branch-{mode}", [spec]))[spec["key"]]
+        outputs[mode] = (
+            await engine.wave(f"probe-branch-{mode}", [spec], allow_unpriced_probe=(mode == "negative"))
+        )[spec["key"]]
     result = {
         "passed": False,
-        "config_hash": digest(engine.settings),
+        "config_hash": capability_config_hash(engine.config),
         "prefix_hash": digest(prefix),
         "observations": outputs,
         "requires_review": "Check binding error, transformation metadata, endpoint/state semantics",

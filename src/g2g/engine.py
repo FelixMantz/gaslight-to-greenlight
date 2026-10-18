@@ -13,18 +13,22 @@ from g2g.analysis.calibration import fit_threshold
 from g2g.compiler import SYSTEM, compile_identity_bindings
 from g2g.coordinator import Coordinator
 from g2g.freeze import readiness
-from g2g.histories import audit_history_balance, validate_script
+from g2g.histories import audit_history_balance, validate_script, verify_history_record
 from g2g.inspect_tasks import provider  # registers the one model-call path
 from g2g.inspect_tasks.tasks import audit_task
 from g2g.models import IdentityBinding
 from g2g.planner import canonical_blocks, request_key, validate_assignments
-from g2g.state import build_state_histories, extraction_prompt
+from g2g.state import build_state_histories, extraction_prompt, validate_extracted_state
 from g2g.util import atomic_write, canonical, digest, read_jsonl, write_json
 
 
 def _load(root, config, name):
     path = root / config["inputs"][name]
-    return read_jsonl(path) if path.suffix in (".jsonl", ".txt") else json.loads(path.read_text())
+    return (
+        read_jsonl(path)
+        if path.suffix in (".jsonl", ".txt")
+        else json.loads(path.read_text(encoding="utf-8"))
+    )
 
 
 class Engine:
@@ -50,7 +54,7 @@ class Engine:
         key = request_key(self.study_id, phase, self.settings["model"], case, condition)
         return {"key": key, "phase": phase, "purpose": purpose, "block_id": block, **kwargs}
 
-    async def wave(self, phase, specs):
+    async def wave(self, phase, specs, allow_unpriced_probe=False):
         if not specs:
             raise ValueError("Empty phase/wave")
         if self.config["provider"] == "together":
@@ -91,6 +95,8 @@ class Engine:
             coordinator=coordinator,
         )
         try:
+            if not allow_unpriced_probe:
+                await coordinator.recover_pending(self.study_id)
             logs = await eval_async(
                 audit_task(specs, self.context),
                 model="g2g/" + self.settings["model"],
@@ -109,7 +115,9 @@ class Engine:
                 raise RuntimeError("Inspect wave incomplete; resume reattaches journal work")
             for spec in specs:
                 row = self.journal.get(spec["key"])
-                if not row or row["state"] != "Collected":
+                if not row or row["state"] not in (
+                    ("Collected", "Unpriced") if allow_unpriced_probe else ("Collected",)
+                ):
                     raise RuntimeError("Wave includes incomplete or unpriced member")
             # Only finalised official logs are published into the backup tree.
             for path in logdir.glob("*.eval"):
@@ -118,7 +126,14 @@ class Engine:
                     path.read_bytes(),
                     immutable=True,
                 )
-            return {s["key"]: self.journal.replay(s["key"]) for s in specs}
+            return {
+                s["key"]: (
+                    json.loads(self.journal.get(s["key"])["observation_json"])
+                    if allow_unpriced_probe and self.journal.get(s["key"])["state"] == "Unpriced"
+                    else self.journal.replay(s["key"])
+                )
+                for s in specs
+            }
         finally:
             await coordinator.close()
             provider.ACTIVE_COORDINATOR = None
@@ -146,7 +161,7 @@ class Engine:
         cfg = self.config["dataset"]
         if cfg.get("source_manifest"):
             inventory = inventory_sources(
-                json.loads((self.root / cfg["source_manifest"]).read_text()), self.root
+                json.loads((self.root / cfg["source_manifest"]).read_text(encoding="utf-8")), self.root
             )
             write_json(self.stage / "source_inventory.json", inventory, immutable=True)
         # Generation requests are explicitly staged: A registry must be reviewed
@@ -171,7 +186,9 @@ class Engine:
                         messages=[
                             {
                                 "role": "system",
-                                "content": (self.root / "prompts" / f"{stage['prompt']}.txt").read_text(),
+                                "content": (self.root / "prompts" / f"{stage['prompt']}.txt").read_text(
+                                    encoding="utf-8"
+                                ),
                             },
                             {"role": "user", "content": json.dumps(job, sort_keys=True)},
                         ],
@@ -180,6 +197,10 @@ class Engine:
                 )
             results = await self.wave("dataset-" + stage["prompt"], specs)
             write_json(self.stage / f"generated-{stage['prompt']}.json", results, immutable=True)
+        if cfg.get("generation_stages") and any(
+            not (self.root / cfg[name]).exists() for name in ("registry", "candidates")
+        ):
+            return {"status": "needs_generated_output_review", "study_id": self.study_id}
         return generate_dataset(self.root, cfg)
 
     async def histories(self):
@@ -288,10 +309,11 @@ class Engine:
         if phase in ("main", "specificity"):
             bank = {
                 (h["pair_id"], h["condition"]): h
-                for h in json.loads((self.stage / "histories" / "bank.json").read_text())
+                for h in json.loads((self.stage / "histories" / "bank.json").read_text(encoding="utf-8"))
             }
-            if not (self.stage / "threshold.json").exists():
-                raise ValueError("Locked calibration threshold required before Main/specificity")
+            self.journal.lock_threshold(self.study_id, None)
+            for history in bank.values():
+                verify_history_record(history, self.journal, self.codec, self.settings["model"])
         specs = []
         if phase == "main":
             blocks = canonical_blocks(
@@ -358,7 +380,7 @@ class Engine:
                 self.config["calibration"]["source_weights"],
                 self.config["calibration"]["expected_counts"],
             )
-            write_json(self.stage / "threshold.json", locked, immutable=True)
+            self.journal.lock_threshold(self.study_id, locked)
             with self.journal.db:
                 self.journal.event(
                     self.study_id,
@@ -393,8 +415,12 @@ class Engine:
         return {"phase": phase, "requests": len(specs)}
 
     async def state(self):
+        if self.config["provider"] != "fixture":
+            self.journal.lock_threshold(self.study_id, None)
         templates = _load(self.root, self.config, "state_templates")
-        bank = json.loads((self.stage / "histories" / "turn1.json").read_text())
+        bank = json.loads((self.stage / "histories" / "turn1.json").read_text(encoding="utf-8"))
+        for history in bank.values():
+            verify_history_record(history, self.journal, self.codec, self.settings["model"])
         work = build_state_histories(templates, bank)
         # Generate genuine common Turn-2..4 suffixes, preserving the base exactly.
         for item in work:
@@ -450,7 +476,7 @@ class Engine:
                 "prefix_hash": digest(item["native"]),
             }
             write_json(
-                self.stage / "histories" / f"state-{template['grant_template_id']}.json",
+                self.stage / "histories" / ("state-" + digest(template["grant_template_id"]) + ".json"),
                 history,
                 immutable=True,
             )
@@ -473,6 +499,7 @@ class Engine:
                         "family_id": template["family_id"],
                         "grant_template_id": template["grant_template_id"],
                         "base_prefix_id": template["base_prefix_id"],
+                        "binding": base["binding"],
                     },
                 )
                 specs.append(spec)
@@ -481,14 +508,17 @@ class Engine:
         decisions = []
         for spec, (visible, binding, history, deps) in zip(specs, contexts):
             extracted = outputs[spec["key"]]
-            try:
-                if extracted["status"] != "success":
-                    raise ValueError("Invalid extraction")
-                ledger = json.loads(extracted["final_text"])
-                if not isinstance(ledger, dict) or not isinstance(ledger.get("grants"), list):
-                    raise ValueError("Extractor ledger schema")
-            except (ValueError, TypeError):
-                ledger = {"grants": [], "extraction_failed": True, "raw_reference": extracted["archive"]}
+            ledger, error = validate_extracted_state(extracted["final_text"], extracted["status"])
+            if error:
+                ledger = {"extraction_status": "invalid", "reason": error}
+            with self.journal.db:
+                self.journal.event(
+                    self.study_id,
+                    spec["key"],
+                    "extract_state",
+                    "invalid" if error else "valid",
+                    {"reason": error, "observation_id": extracted["observation_id"]},
+                )
             for protocol, arm in [("full", 2), ("structured", 0), ("reset", 0)]:
                 cid = spec["metadata"]["case_id"]
                 decisions.append(
@@ -503,7 +533,12 @@ class Engine:
                         history=history if protocol == "full" else None,
                         ledger=ledger if protocol == "structured" else None,
                         dependencies=deps + [spec["key"]],
-                        metadata={**spec["metadata"], "protocol": protocol},
+                        metadata={
+                            **spec["metadata"],
+                            "protocol": protocol,
+                            "extraction_valid": error is None,
+                            "extraction_observation_id": extracted["observation_id"],
+                        },
                     )
                 )
         await self.wave("state-decisions", decisions)

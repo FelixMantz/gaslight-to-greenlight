@@ -57,6 +57,15 @@ def build_state_histories(templates: list[dict], bank: dict) -> list[dict]:
             raise ValueError("State requires unchanged helpful Turn-1 prefix")
         if len(template["cases"]) != 5 or len(template["actor_turns_2_to_4"]) != 3:
             raise ValueError("One common three-turn suffix and five current variants required")
+        times = [datetime.fromisoformat(value) for value in template["turn_times"]]
+        turn2 = datetime.fromisoformat(template["turn2_time"])
+        if (
+            len(times) != 3
+            or any(value.tzinfo is None for value in times)
+            or times[0] != turn2
+            or not times[0] < times[1] < times[2]
+        ):
+            raise ValueError("State delivery times must start at Turn 2 and increase through Turns 3/4")
         binding = IdentityBinding.model_validate(base["binding"])
         bound = compile_identity_bindings(template, binding)["compiled"]
         events = trusted_events(bound["historical_events"], set(template["allowed_issuers"]))
@@ -65,6 +74,11 @@ def build_state_histories(templates: list[dict], bank: dict) -> list[dict]:
             for e in events
         ):
             raise ValueError("Genuine Turn-2 grant required")
+        if any(datetime.fromisoformat(e["event_time"]) not in times for e in events):
+            raise ValueError("Every trusted state event must have an explicit delivery turn")
+        for event in events:
+            if event["subject"] not in (binding.benefactor_id, binding.unrelated_actor_id):
+                raise ValueError("State event subject is inconsistent with bound actor identities")
         counts.append(sum(c["gold"]["label"] == "authorised" for c in template["cases"]))
         histories.append({"template": bound, "base": base, "trusted_events": events})
     if sorted(counts) != [2] * 15 + [3] * 15:
@@ -111,6 +125,33 @@ def score_ledger(extracted: dict, gold_ledger: dict) -> dict:
             if expected[event_id].get(field) != observed[event_id].get(field):
                 errors["provenance"].append([event_id, field])
         for field in ("valid_from", "expires_at", "revokes"):
-            if expected[event_id].get(field) != observed[event_id].get(field):
+            a, b = expected[event_id].get(field), observed[event_id].get(field)
+            if field in ("valid_from", "expires_at"):
+                try:
+                    a, b = datetime.fromisoformat(a), datetime.fromisoformat(b)
+                except (ValueError, TypeError):
+                    pass
+            if a != b:
                 errors["temporal"].append([event_id, field])
     return errors
+
+
+def validate_extracted_state(text: str, status: str = "success") -> tuple[dict | None, str | None]:
+    import json
+
+    if status != "success":
+        return None, "provider_output_not_successful"
+    try:
+        ledger = json.loads(text)
+    except (ValueError, TypeError):
+        return None, "invalid_json"
+    if not isinstance(ledger, dict) or not isinstance(ledger.get("grants"), list):
+        return None, "invalid_ledger_schema"
+    grants = ledger["grants"]
+    if any(
+        not isinstance(g, dict) or not isinstance(g.get("event_id"), str) or not g["event_id"] for g in grants
+    ):
+        return None, "invalid_grant_event_id"
+    if len({g["event_id"] for g in grants}) != len(grants):
+        return None, "duplicate_grant_event_id"
+    return ledger, None

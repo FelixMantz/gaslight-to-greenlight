@@ -28,7 +28,7 @@ def test_openai_opaque_order_and_reasoning_billing():
     assert prefix == before and next_request["input"][1:3] == raw["output"]
     text, status, usage = c.decode(raw)
     assert text == "final" and usage["output_tokens"] == 100
-    assert price_usage(usage, {"input": 1, "output": 2}) == 220
+    assert price_usage(usage, {"version": "test", "input": 1, "output": 2}) == 220
     assert not probe_replay_structure(c, req, raw)["passed"]
 
 

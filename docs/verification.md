@@ -3,11 +3,11 @@
 ## Automated checks
 
 - Exact structural parser with bare ampersands, inequalities, emails, type/code/HTML text, reserved-tag attacks, duplicate envelopes, size bounds and ASCII integer scores.
-- Visible/gold separation, literal identity substitution, unknown placeholders and identity collisions.
+- Visible/gold separation, literal identity substitution, unknown placeholders and identity collisions; state/current packet equality with reviewed inputs, assignment metadata validation, source working-tree and dataset-job hashes, derived-history archive verification and analysis-seal/threshold integrity.
 - Weighted upper-tail calibration, 101 boundary, weight-only ESS, planning output allowance versus actual API ceiling.
 - Full 450-case/60-pair allocation with unique family cells; class/source/domain constraints and all-pair 150-case specificity selection.
 - Two-way finite-cluster algebra, missing bounds, eight-test Holm family, zero-variance handling, nested state clustering and seeded null diagnostics.
-- Canonical barrier admission, missing-member timeout, shared pending poller, accepted-batch recovery, collected replay, no duplicate billing, unknown acceptance and held reservations.
+- Canonical barrier admission, late/missing-member termination, failure-log disk errors, queued-block cancellation, collection before new submission, shared pending poller, accepted-batch recovery, collected replay, no duplicate billing, unknown acceptance and held reservations.
 - Cross-study $450/$500 guards, full-disk snapshot failure, second-runner lock rejection, consistent snapshot and corrupt-archive refusal.
 - Mocked native batch request/result/custom-ID contracts and no retries on ambiguous POST timeouts; complete opaque response-block/signature retention and final-answer-only parsing.
 - Official Inspect `.eval` writer/reader, core run → report → replay, HTML escaping and no gold in samples.

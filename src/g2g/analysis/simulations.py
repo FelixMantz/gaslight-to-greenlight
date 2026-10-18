@@ -14,6 +14,8 @@ def simulate_inference(
     history_sd=0.2236068,
     residual_sd=0.9486833,
     missing_rate=0.0,
+    baseline_rate=0.5,
+    shared_uniform_probability=0.5,
 ):
     """Diagnostic at the actual frozen sparse design, including binary discordance/missingness.
 
@@ -23,6 +25,8 @@ def simulate_inference(
         raise ValueError("At least two replicates and a nonempty assignment required")
     if not 0 <= missing_rate < 1:
         raise ValueError("Invalid missing rate")
+    if not 0 < baseline_rate < 1 or not 0 <= shared_uniform_probability <= 1:
+        raise ValueError("Invalid binary baseline/discordance configuration")
     rng = np.random.default_rng(seed)
     families = sorted({r["family_id"] for r in assignment})
     histories = sorted({r["history_pair_id"] for r in assignment})
@@ -35,9 +39,14 @@ def simulate_inference(
         for row in assignment:
             difference = fs[row["family_id"]] + hs[row["history_pair_id"]] + rng.normal(0, residual_sd)
             if binary:
-                # Paired discordance with shared latent heterogeneity and independent sign.
-                probability = 1 / (1 + np.exp(-difference))
-                difference = int(rng.random() < probability) - int(rng.random() < probability)
+                # Symmetric arm-specific logits preserve the unconditional null,
+                # while family/history effects induce correlated paired differences.
+                base = np.log(baseline_rate / (1 - baseline_rate))
+                p1 = 1 / (1 + np.exp(-(base - difference / 2)))
+                p2 = 1 / (1 + np.exp(-(base + difference / 2)))
+                u1 = rng.random()
+                u2 = u1 if rng.random() < shared_uniform_probability else rng.random()
+                difference = int(u2 < p2) - int(u1 < p1)
             if rng.random() >= missing_rate:
                 rows.append({**row, "difference": difference})
         estimate = paired_estimate(rows)
@@ -57,6 +66,9 @@ def simulate_inference(
         "inconclusive": inconclusive,
         "binary": binary,
         "missing_rate": missing_rate,
+        "missingness_model": "MCAR",
+        "baseline_rate": baseline_rate,
+        "shared_uniform_probability": shared_uniform_probability,
         "variance_components": [family_sd**2, history_sd**2, residual_sd**2],
         "empirical_variance": float(np.var(means, ddof=1)) if len(means) > 1 else None,
         "mean_estimated_variance": float(np.mean(variances)) if variances else None,

@@ -44,7 +44,7 @@ class FixtureTransport:
         return batch_id
 
     async def poll(self, batch_id, keys):
-        result = json.loads((self.directory / (batch_id + ".json")).read_text())
+        result = json.loads((self.directory / (batch_id + ".json")).read_text(encoding="utf-8"))
         if set(result) != set(keys):
             raise ValueError("Fixture custom ID mismatch")
         return result
@@ -180,7 +180,7 @@ class ProviderTransport:
     async def poll(self, batch_id, keys):
         p = self.provider
         if p == "together":
-            return json.loads((self.spool / (batch_id + ".json")).read_text())
+            return json.loads((self.spool / (batch_id + ".json")).read_text(encoding="utf-8"))
         if p == "openai":
             batch = (await self._request("GET", "batches/" + batch_id)).json()
             if batch["status"] not in {"completed", "expired", "cancelled", "failed"}:
@@ -194,7 +194,7 @@ class ProviderTransport:
                         key = row["custom_id"]
                         if key in result:
                             raise ValueError("Duplicate provider custom ID")
-                        result[key] = row.get("response", {}).get("body") or {
+                        result[key] = (row.get("response") or {}).get("body") or {
                             "error": row.get("error") or row
                         }
         elif p == "anthropic":

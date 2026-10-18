@@ -33,6 +33,7 @@ def test_paid_preset_and_synced_runtime_fail_closed(tmp_path, monkeypatch):
     config = yaml.safe_load(Path("config/study.yaml").read_text())
     monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
     monkeypatch.delenv("CODESPACES", raising=False)
+    config["price"] = {"version": "test", "input": 0, "output": 0}
     with pytest.raises(ValueError, match="Live gate"):
         readiness(tmp_path, config, "main")
     with pytest.raises(ValueError):

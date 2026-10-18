@@ -102,7 +102,7 @@ def execute(args):
         from g2g.analysis.simulations import simulate_inference
 
         result = simulate_inference(
-            json.loads(args.assignments.read_text()),
+            json.loads(args.assignments.read_text(encoding="utf-8")),
             args.replicates,
             args.seed,
             args.binary,
@@ -148,8 +148,11 @@ def execute(args):
             if args.command == "run":
                 config_path = Path(args.preset)
                 if not config_path.is_file():
-                    config_path = root / "config" / (args.preset + ".yaml")
-                config = yaml.safe_load(config_path.read_text())
+                    candidate = root / config_path
+                    config_path = (
+                        candidate if candidate.is_file() else root / "config" / (args.preset + ".yaml")
+                    )
+                config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
                 study = validate_id(
                     args.study_id
                     or "study-" + utcnow().replace(":", "").replace(".", "").replace("+", "")[:22]
@@ -171,7 +174,10 @@ def execute(args):
                 readiness(root, config, phase)
                 manifest = freeze_study(root, config)
                 journal.freeze(study, manifest)
-                write_json(root / "runs" / study / "manifest" / "last-phase.json", {"phase": phase})
+                write_json(
+                    root / "runs" / study / "manifest" / "last-phase.json",
+                    {"phase": phase, "probe_replay": args.probe_replay},
+                )
                 return {
                     "study_id": study,
                     **asyncio.run(
@@ -192,13 +198,14 @@ def execute(args):
             unknown = [r["key"] for r in journal.requests(study) if r["state"] in ("Unknown", "Unpriced")]
             if unknown:
                 raise ValueError("Reconcile acceptance/charges first: " + ",".join(unknown))
-            phase = (
-                args.phase
-                or json.loads((root / "runs" / study / "manifest" / "last-phase.json").read_text())["phase"]
+            last = json.loads(
+                (root / "runs" / study / "manifest" / "last-phase.json").read_text(encoding="utf-8")
             )
+            phase = args.phase or last["phase"]
+            probe = bool(last.get("probe_replay")) and args.phase is None
             return {
                 "study_id": study,
-                **asyncio.run(_run_engine(root, runtime, journal, study, manifest["config"], phase)),
+                **asyncio.run(_run_engine(root, runtime, journal, study, manifest["config"], phase, probe)),
             }
         finally:
             journal.snapshot_journal()

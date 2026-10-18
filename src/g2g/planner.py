@@ -77,11 +77,11 @@ def assign_histories(cases: list[dict], bank: list[str], seed: int) -> list[dict
                 ([i * pairs + j for i, c in enumerate(cases) if c["label"] == label], count, count)
             )
         # At most one row per semantic family x history cell across both classes.
-        for family in {c["family_id"] for c in cases}:
+        for family in sorted({c["family_id"] for c in cases}):
             constraints.append(
                 ([i * pairs + j for i, c in enumerate(cases) if c["family_id"] == family], 0, 1)
             )
-        for domain in {c.get("domain", "unspecified") for c in cases}:
+        for domain in sorted({c.get("domain", "unspecified") for c in cases}):
             members = [i * pairs + j for i, c in enumerate(cases) if c.get("domain", "unspecified") == domain]
             total = len(members)
             constraints.append((members, total // pairs, (total + pairs - 1) // pairs))
@@ -124,7 +124,7 @@ def select_specificity(rows: list[dict], seed: int) -> list[dict]:
     constraints = [(list(range(len(rows))), 150, 150)]
     for label in ("benign", "violating"):
         constraints.append(([i for i, r in enumerate(rows) if r["label"] == label], 75, 75))
-        for pair in pairs:
+        for pair in sorted(pairs):
             constraints.append(
                 (
                     [i for i, r in enumerate(rows) if r["label"] == label and r["history_pair_id"] == pair],
