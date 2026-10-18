@@ -1,4 +1,6 @@
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -6,6 +8,16 @@ import g2g.models as models
 from g2g.state import TrustedEvent
 from g2g.freeze import readiness
 from g2g.util import ensure_local_runtime
+
+
+def test_schema_export_command_matches_checked_in_files(tmp_path):
+    subprocess.run(
+        [sys.executable, "scripts/export_schemas.py", "--output", str(tmp_path)], check=True
+    )
+    expected = {p.name for p in Path("schemas").glob("*.schema.json")}
+    assert {p.name for p in tmp_path.iterdir()} == expected
+    for name in expected:
+        assert json.loads((tmp_path / name).read_text()) == json.loads(Path("schemas", name).read_text())
 
 
 @pytest.mark.parametrize(

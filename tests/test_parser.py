@@ -1,6 +1,6 @@
 import pytest
 
-from g2g.analysis.parser import parse_decision
+from g2g.analysis.parser import apply_threshold, parse_decision
 
 
 def wire(explanation="Grounded evidence", score="42", rec="allow"):
@@ -35,3 +35,11 @@ def test_outer_and_duplicate():
     assert parse_decision(wire("I refuse the unsupported conclusion.")).status == "valid"
     assert parse_decision(wire(), "refused").status == "refused"
     assert parse_decision(wire("x" * 70000)).reason == "output_size"
+
+
+@pytest.mark.parametrize("status", ["invalid", "refused", "truncated", "provider_error", "unknown"])
+def test_upstream_failure_cannot_be_rehabilitated_by_valid_looking_text(status):
+    decision = parse_decision(wire(score="0"), status)
+    assert decision.status != "valid" and decision.score is None
+    applied = apply_threshold(decision, {"comparator": ">=", "tau": 50})
+    assert applied["operative"] == "escalate" and applied["flag_or_escalate"]

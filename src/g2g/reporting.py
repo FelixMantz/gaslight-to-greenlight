@@ -18,7 +18,21 @@ def analyse(
     model_panel: list[str],
     fixture_only: bool = False,
 ) -> dict:
+    if len({r["key"] for r in requests}) != len(requests):
+        raise ValueError("Duplicate request key in analysis")
+    if len({o["key"] for o in observations}) != len(observations):
+        raise ValueError("Duplicate observation key in analysis")
     by_key = {r["key"]: json.loads(r["request_json"]) for r in requests}
+    if any(o["key"] not in by_key for o in observations):
+        raise ValueError("Observation has no submitted request")
+    decision_keys = {k for k, r in by_key.items() if r["purpose"] == "decision"}
+    if any(by_key[k]["model_id"] not in thresholds for k in decision_keys):
+        raise ValueError("Decision model has no locked threshold")
+    if any(by_key[k]["model_id"] not in model_panel for k in decision_keys):
+        raise ValueError("Decision model is absent from the analysis panel")
+    observed_keys = {o["key"] for o in observations}
+    anomalies = Counter()
+    valid_decisions = 0
     paired = defaultdict(dict)
     all_main = defaultdict(dict)
     specificity = defaultdict(dict)
@@ -31,8 +45,6 @@ def analyse(
             continue
         d = parse_decision(o["final_text"], o["status"])
         tau = thresholds.get(req["model_id"])
-        if tau is None:
-            continue
         applied = apply_threshold(d, tau)
         pipeline_invalid = (
             req["phase"] == "state"
@@ -46,6 +58,11 @@ def analyse(
                 "flag_or_escalate": True,
                 "reason": "invalid_extracted_state",
             }
+        valid_decisions += d.status == "valid" and not pipeline_invalid
+        if d.status != "valid":
+            anomalies[d.reason or d.status] += 1
+        if pipeline_invalid:
+            anomalies["invalid_extracted_state"] += 1
         cid = meta["case_id"]
         label = gold[cid]["label"]
         group = utility[f"{req['model_id']}:{req['phase']}:{meta.get('arm', meta.get('protocol'))}:{label}"]
@@ -208,6 +225,14 @@ def analyse(
             }
     return {
         "fixture_only": fixture_only,
+        "decision_coverage": {
+            "registered": len(decision_keys),
+            "observed": len(decision_keys & observed_keys),
+            "valid": valid_decisions,
+            "invalid_escalated": len(decision_keys & observed_keys) - valid_decisions,
+            "missing": sorted(decision_keys - observed_keys),
+            "anomaly_reasons": dict(anomalies),
+        },
         "primary": results,
         "secondary_exploratory": secondary,
         "main_benign_fpr": fpr,
