@@ -17,5 +17,7 @@ jobs:
           version: '0.12.23'
           python-version: ${{ matrix.python }}
       - run: uv sync --frozen --extra dev
+      - run: uv run --frozen python scripts/export_schemas.py
+      - run: git diff --exit-code -- schemas
       - run: uv run --frozen pytest -q
       - run: uv run --frozen ruff check src tests scripts

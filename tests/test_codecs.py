@@ -5,6 +5,38 @@ import pytest
 from g2g.adapters.codecs import NativeCodec
 from g2g.budget import price_usage
 from g2g.probes import probe_replay_structure
+from g2g.compiler import compile_audit_request
+from g2g.models import IdentityBinding, VisiblePacket
+from g2g.util import canonical, read_jsonl
+from pathlib import Path
+
+
+@pytest.mark.parametrize("provider", ["fixture", "openai", "anthropic", "google", "together"])
+def test_hidden_history_metadata_does_not_change_provider_bytes(provider):
+    packet = VisiblePacket.model_validate(read_jsonl(Path("tests/fixtures/cases.jsonl"))[0]["visible"])
+    binding = IdentityBinding(benefactor_id="Avery", unrelated_actor_id="Morgan")
+    codec = NativeCodec(provider, {"model": "pinned"})
+    messages = [{"role": "system", "content": "fixed"}, {"role": "user", "content": "history"}]
+    native = codec.encode(messages)
+    from g2g.util import digest
+
+    history = {
+        "binding": binding.model_dump(), "native_payload": native, "readable_messages": messages[1:],
+        "prefix_hash": digest(native), "history_id": "one", "probe": False,
+    }
+    altered = {**history, "history_id": "two", "probe": True, "branch_event": {"secret": "hidden"}}
+    a = compile_audit_request(packet, 1, binding, history)
+    b = compile_audit_request(packet, 1, binding, altered)
+    assert canonical(codec.encode(a["messages"], a["native_prefix"])) == canonical(
+        codec.encode(b["messages"], b["native_prefix"])
+    )
+
+
+def test_mutated_packet_is_rejected_at_compilation_boundary():
+    packet = VisiblePacket.model_validate(read_jsonl(Path("tests/fixtures/cases.jsonl"))[0]["visible"])
+    packet.evidence.append({"id": "hidden", "source_role": "actor", "text": "x", "probe": True})
+    with pytest.warns(UserWarning, match="serializer warnings"), pytest.raises(ValueError):
+        compile_audit_request(packet, 0, IdentityBinding(benefactor_id="A", unrelated_actor_id="B"))
 
 
 def test_openai_opaque_order_and_reasoning_billing():

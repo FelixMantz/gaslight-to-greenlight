@@ -1,6 +1,7 @@
 """Export JSON Schemas from the executable contracts."""
 
 import json
+import argparse
 from pathlib import Path
 
 import g2g.models as models
@@ -23,7 +24,11 @@ CONTRACTS = [
 CONTRACTS.append(TrustedEvent)
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, default=ROOT / "schemas")
+    args = parser.parse_args()
+    args.output.mkdir(parents=True, exist_ok=True)
     for contract in CONTRACTS:
-        (ROOT / "schemas" / (contract.__name__ + ".schema.json")).write_text(
+        (args.output / (contract.__name__ + ".schema.json")).write_text(
             json.dumps(contract.model_json_schema(), indent=2) + "\n", encoding="utf-8"
         )

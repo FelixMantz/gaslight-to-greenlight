@@ -66,6 +66,9 @@ def compile_audit_request(
     # Explicit type boundary: GoldRecord and AuditCase cannot enter the compiler.
     if type(visible) is not VisiblePacket or arm not in range(7):
         raise TypeError("Compiler accepts only VisiblePacket and a legal arm")
+    # Frozen Pydantic models still contain mutable nested lists, and model_copy
+    # can bypass validation. Revalidate the full allowlisted contract at egress.
+    visible = VisiblePacket.model_validate(visible.model_dump(mode="json"))
     compiled = compile_identity_bindings(visible.model_dump(mode="json"), binding, swap)
     current = json.dumps(compiled["compiled"], ensure_ascii=False, sort_keys=True)
     if ledger is not None:

@@ -25,6 +25,8 @@ class Decision:
 def parse_decision(text: str, provider_status: str = "success", max_bytes: int = 65536) -> Decision:
     if provider_status in {"refused", "truncated", "provider_error"}:
         return Decision(provider_status, reason=provider_status)
+    if provider_status not in {"success", "valid"}:
+        return Decision("invalid", reason="upstream_status:" + str(provider_status))
     if len(text.encode("utf-8")) > max_bytes:
         return Decision("invalid", reason="output_size")
     match = ENVELOPE.fullmatch(text)
