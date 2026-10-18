@@ -27,13 +27,24 @@ def test_exported_schema_matches_executable_contract(contract):
     assert schema == contract.model_json_schema()
 
 
-def test_paid_preset_and_synced_runtime_fail_closed(tmp_path):
+def test_paid_preset_and_synced_runtime_fail_closed(tmp_path, monkeypatch):
     import yaml
 
     config = yaml.safe_load(Path("config/study.yaml").read_text())
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    monkeypatch.delenv("CODESPACES", raising=False)
     with pytest.raises(ValueError, match="Live gate"):
         readiness(tmp_path, config, "main")
     with pytest.raises(ValueError):
         ensure_local_runtime(tmp_path / "Dropbox/runtime", tmp_path / "project")
     with pytest.raises(ValueError):
         ensure_local_runtime(tmp_path / "project/runtime", tmp_path / "project")
+
+
+def test_paid_work_is_rejected_in_ci(tmp_path, monkeypatch):
+    import yaml
+
+    config = yaml.safe_load(Path("config/study.yaml").read_text())
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    with pytest.raises(ValueError, match="sole local laptop"):
+        readiness(tmp_path, config, "pilot")

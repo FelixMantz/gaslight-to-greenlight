@@ -416,7 +416,7 @@ class Journal:
                     raise RuntimeError("Snapshot integrity failure")
             finally:
                 destination.close()
-            with open(name, "rb") as f:
+            with open(name, "r+b") as f:
                 os.fsync(f.fileno())
             os.replace(name, target)
             fsync_dir(target.parent)
